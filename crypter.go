@@ -7,6 +7,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"io"
+    "hash"
 	"fmt"
 )
 
@@ -55,7 +56,11 @@ func Encrypt(key string, text []byte) string {
 
 }
 
-func Decrypt(key string, b64 string) string {
+func CBCEncrypt(key, b64 string) string {
+
+}
+
+func Decrypt(key, b64 string) string {
     bkey := evpBytesToKey(key,32)
     text := decodeBase64(b64)
     block, err := aes.NewCipher(bkey)
@@ -74,8 +79,43 @@ func Decrypt(key string, b64 string) string {
     return string(text)
 }
 
-func encodeBase64(b []byte) string {                                                                                                                                                                        
-    return base64.StdEncoding.EncodeToString(b)                                                                                                                                                             
+func CBCDecrypt(key, b64 string) string {
+    b := decodeBase64(b64)
+    hashKey, iv := genIvAndKey([]byte{}, []byte(key), md5.New(), 32, 1)
+    block, err := aes.NewCipher(hashKey)
+
+    if err != nil {
+        panic(err)
+    }
+
+    cbc := cipher.NewCBCDecrypter(block, iv)
+    fmt.Println("len b before", len(b))
+    cbc.CryptBlocks(b, b)
+    fmt.Println("len b after", len(b))
+    fmt.Println(b)
+    s := string(b)
+    fmt.Println("#", s, "#")
+    return s // now clear text
+}
+
+func genIvAndKey(salt, keyData []byte, h hash.Hash, keyLen, blockLen int) (key []byte, iv []byte) {
+    res := make([]byte, 0, keyLen+blockLen)
+    p := append(keyData, salt...)
+    var d_last []byte
+
+    for ; len(res) < keyLen+blockLen; h.Reset() {
+        h.Write(append(d_last, p...))
+        resNew := h.Sum(res)
+        d_last = resNew[len(res):]
+        res = resNew
+    }
+
+    return res[:keyLen], res[keyLen:]
+}
+
+
+func encodeBase64(b []byte) string {
+    return base64.StdEncoding.EncodeToString(b)
 }                                                                                                                                                                                                           
 
 func decodeBase64(s string) []byte {                                                                                                                                                                        
