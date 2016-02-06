@@ -2,7 +2,6 @@ package crypt
 
 import (
 	"testing"
-	"fmt"
 )
 
 func TestEncrypt(t *testing.T){
@@ -16,7 +15,6 @@ func TestEncrypt(t *testing.T){
 
 func TestCBCDecrypt(t *testing.T){
 	key := "random array of characters"
-	fmt.Println(" in cbc decrypt")
 	//s := Decrypt(key, "hg+TLS1yFfXaGaW3t7Cc0Q==")
 
 	t.Log("aFsycP-HU62YL8yLXRC5lw==", CBCDecrypt(key, "aFsycP+HU62YL8yLXRC5lw=="))
@@ -24,3 +22,7 @@ func TestCBCDecrypt(t *testing.T){
 	t.Log("-qNuRpQKjGbGleL_8Efuhg==", CBCDecrypt(key, "+qNuRpQKjGbGleL/8Efuhg=="))
 }
 
+func TestCBCEncrypt(t *testing.T){
+	key := "random array of characters"
+	t.Log("jason is awesome", CBCEncrypt(key, []byte("jason is awesome")))
+}

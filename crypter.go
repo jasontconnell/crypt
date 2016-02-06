@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"io"
     "hash"
-	"fmt"
 )
 
 func md5sum(d []byte) []byte {
@@ -56,8 +55,20 @@ func Encrypt(key string, text []byte) string {
 
 }
 
-func CBCEncrypt(key, b64 string) string {
-
+func CBCEncrypt(key string, text []byte) string {
+    bkey := evpBytesToKey(key,32)
+    block, err := aes.NewCipher(bkey)
+    if err != nil {
+        panic(err)
+    }
+    ciphertext := make([]byte, aes.BlockSize+len(text))
+    iv := ciphertext[:aes.BlockSize]
+    if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+        panic(err)
+    }
+    cbc := cipher.NewCBCEncrypter(block, iv)
+    cbc.CryptBlocks(ciphertext[aes.BlockSize:], text)
+    return encodeBase64(ciphertext)
 }
 
 func Decrypt(key, b64 string) string {
@@ -89,13 +100,15 @@ func CBCDecrypt(key, b64 string) string {
     }
 
     cbc := cipher.NewCBCDecrypter(block, iv)
-    fmt.Println("len b before", len(b))
     cbc.CryptBlocks(b, b)
-    fmt.Println("len b after", len(b))
-    fmt.Println(b)
-    s := string(b)
-    fmt.Println("#", s, "#")
+    s := string(removePadding(b))
     return s // now clear text
+}
+
+func removePadding(b []byte) []byte {
+    l := len(b)
+    p := int(b[len(b)-1])
+    return b[:(l-p)]
 }
 
 func genIvAndKey(salt, keyData []byte, h hash.Hash, keyLen, blockLen int) (key []byte, iv []byte) {
