@@ -31,6 +31,7 @@ func TestCBCEncrypt(t *testing.T){
 
 	fmt.Println(enc)
 	fmt.Println(dec)
+
 }
 
 func TestCBCEncryptBase64Url(t *testing.T){
@@ -41,4 +42,6 @@ func TestCBCEncryptBase64Url(t *testing.T){
 	fmt.Println(enc)
 	fmt.Println(dec)
 
+
+	fmt.Println("old one", CBCDecryptOldBase64Url(key, "-qNuRpQKjGbGleL_8Efuhg=="))
 }

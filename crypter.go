@@ -110,6 +110,21 @@ func CBCDecrypt(key, b64 string) string {
     return s // now clear text
 }
 
+func CBCDecryptOld(key, b64 string) string {
+    b := decodeBase64(b64)  
+    hashKey,iv := genIvAndKey([]byte{}, []byte(key), md5.New(), 32, 1)
+    block, err := aes.NewCipher(hashKey)
+
+    if err != nil {
+        panic(err)
+    }
+
+    cbc := cipher.NewCBCDecrypter(block, iv)
+    cbc.CryptBlocks(b, b)
+    s := string(removePadding(b))
+    return s // now clear text
+}
+
 func base64urlencode(b64 string) string {
     t := strings.Replace(b64, "+", "-", -1)
     t = strings.Replace(t, "/", "_", -1)
@@ -125,6 +140,11 @@ func base64urldecode(b64 string) string {
 func CBCDecryptBase64Url(key, b64 string) string {
     t := base64urldecode(b64)
     return CBCDecrypt(key, t)
+}
+
+func CBCDecryptOldBase64Url(key, b64 string) string {
+    t := base64urldecode(b64)
+    return CBCDecryptOld(key, t)
 }
 
 func CBCEncryptBase64Url(key string, text []byte) string {
