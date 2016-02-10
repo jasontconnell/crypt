@@ -2,6 +2,8 @@ package crypt
 
 import (
 	"testing"
+
+	"fmt"
 )
 
 func TestEncrypt(t *testing.T){
@@ -24,5 +26,19 @@ func TestCBCDecrypt(t *testing.T){
 
 func TestCBCEncrypt(t *testing.T){
 	key := "random array of characters"
-	t.Log("jason is awesome", CBCEncrypt(key, []byte("jason is awesome")))
+	enc := CBCEncrypt(key, []byte("jason is awesome"))
+	dec := CBCDecrypt(key, enc)
+
+	fmt.Println(enc)
+	fmt.Println(dec)
+}
+
+func TestCBCEncryptBase64Url(t *testing.T){
+	key := "random array of characters"
+	enc := CBCEncryptBase64Url(key, []byte("jason is awesome"))
+	dec := CBCDecryptBase64Url(key, enc)
+
+	fmt.Println(enc)
+	fmt.Println(dec)
+
 }

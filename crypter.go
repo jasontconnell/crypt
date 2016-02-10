@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"io"
     "hash"
+    "strings"
+    // "fmt"
 )
 
 func md5sum(d []byte) []byte {
@@ -55,22 +57,6 @@ func Encrypt(key string, text []byte) string {
 
 }
 
-func CBCEncrypt(key string, text []byte) string {
-    bkey := evpBytesToKey(key,32)
-    block, err := aes.NewCipher(bkey)
-    if err != nil {
-        panic(err)
-    }
-    ciphertext := make([]byte, aes.BlockSize+len(text))
-    iv := ciphertext[:aes.BlockSize]
-    if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-        panic(err)
-    }
-    cbc := cipher.NewCBCEncrypter(block, iv)
-    cbc.CryptBlocks(ciphertext[aes.BlockSize:], text)
-    return encodeBase64(ciphertext)
-}
-
 func Decrypt(key, b64 string) string {
     bkey := evpBytesToKey(key,32)
     text := decodeBase64(b64)
@@ -90,9 +76,28 @@ func Decrypt(key, b64 string) string {
     return string(text)
 }
 
+func CBCEncrypt(key string, text []byte) string {
+    bkey := evpBytesToKey(key,32)
+    block, err := aes.NewCipher(bkey)
+    if err != nil {
+        panic(err)
+    }
+    ciphertext := make([]byte, aes.BlockSize+len(text))
+    iv := ciphertext[:aes.BlockSize]
+    if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+        panic(err)
+    }
+    cbc := cipher.NewCBCEncrypter(block, iv)
+    cbc.CryptBlocks(ciphertext[aes.BlockSize:], text)
+    return encodeBase64(ciphertext)
+}
+
 func CBCDecrypt(key, b64 string) string {
-    b := decodeBase64(b64)
-    hashKey, iv := genIvAndKey([]byte{}, []byte(key), md5.New(), 32, 1)
+    b := decodeBase64(b64)  
+    hashKey := evpBytesToKey(key,32)
+    iv := b[:aes.BlockSize]
+    b = b[aes.BlockSize:]
+    //hashKey, iv := genIvAndKey([]byte{}, []byte(key), md5.New(), 32, 1)
     block, err := aes.NewCipher(hashKey)
 
     if err != nil {
@@ -105,10 +110,40 @@ func CBCDecrypt(key, b64 string) string {
     return s // now clear text
 }
 
+func base64urlencode(b64 string) string {
+    t := strings.Replace(b64, "+", "-", -1)
+    t = strings.Replace(t, "/", "_", -1)
+    return t
+}
+
+func base64urldecode(b64 string) string {
+    t := strings.Replace(b64, "-", "+", -1)
+    t = strings.Replace(t, "_", "/", -1)
+    return t
+}
+
+func CBCDecryptBase64Url(key, b64 string) string {
+    t := base64urldecode(b64)
+    return CBCDecrypt(key, t)
+}
+
+func CBCEncryptBase64Url(key string, text []byte) string {
+    t := CBCEncrypt(key, text)
+    return base64urlencode(t)
+}
+
 func removePadding(b []byte) []byte {
     l := len(b)
-    p := int(b[len(b)-1])
-    return b[:(l-p)]
+    if l == 0 { return b }
+    p := int(b[l-1])
+    var ret []byte
+    if p <= 16 {
+        ret = b[:(l-p)]
+    } else {
+        ret = b
+    }
+
+    return ret
 }
 
 func genIvAndKey(salt, keyData []byte, h hash.Hash, keyLen, blockLen int) (key []byte, iv []byte) {
