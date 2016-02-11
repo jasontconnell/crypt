@@ -44,4 +44,11 @@ func TestCBCEncryptBase64Url(t *testing.T){
 
 
 	fmt.Println("old one", CBCDecryptOldBase64Url(key, "-qNuRpQKjGbGleL_8Efuhg=="))
+
+	enc2 := CBCEncryptBase64Url(key, []byte("jason connell rules"))
+	fmt.Println("jason connell rules", enc2)
+
+	dec2 := CBCDecryptBase64Url(key, enc2)
+	fmt.Println(enc2, dec2)		
+	fmt.Println("old one with new decrypt", CBCDecryptBase64Url(key, "-qNuRpQKjGbGleL_8Efuhg=="))
 }
