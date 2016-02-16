@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/md5"
+    "crypto/sha256"
 	"encoding/base64"
 	"io"
     "hash"
@@ -112,6 +113,18 @@ func CBCEncryptBase64Url(key string, text []byte) string {
     t := CBCEncrypt(key, text)
     return base64urlencode(t)
 }
+
+func SHA256(s string) string {
+    bytes := sha256sum([]byte(s))
+    return encodeBase64(bytes)
+}
+
+func sha256sum(d []byte) []byte {
+    h := sha256.New()
+    h.Write(d)
+    return h.Sum(nil)
+}
+
 
 func md5sum(d []byte) []byte {
     h := md5.New()

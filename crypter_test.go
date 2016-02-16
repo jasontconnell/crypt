@@ -52,3 +52,9 @@ func TestCBCEncryptBase64Url(t *testing.T){
 	fmt.Println(enc2, dec2)		
 	fmt.Println("old one with new decrypt", CBCDecryptBase64Url(key, "-qNuRpQKjGbGleL_8Efuhg=="))
 }
+
+func TestSHA256(t *testing.T){
+	fmt.Println(SHA256("jason123"))
+	fmt.Println(SHA256("Sublime2"))
+	
+}
