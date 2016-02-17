@@ -58,3 +58,11 @@ func TestSHA256(t *testing.T){
 	fmt.Println(SHA256("Sublime2"))
 	
 }
+
+//04eCB7UgahvXP_XZ-ZMdEw==
+func TestCBCDecryptOldBase64Url(t *testing.T){
+		key := "random array of characters"
+
+	fmt.Println("cbc decrypt old", CBCDecryptOldBase64Url(key, "JbQMc_vRDhKUbV3e0Jn01A=="))
+	fmt.Println("cbc decrypt new", CBCDecryptBase64Url(key, "JbQMc_vRDhKUbV3e0Jn01A=="))
+}
