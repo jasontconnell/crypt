@@ -56,7 +56,7 @@ func TestCBCEncryptBase64Url(t *testing.T){
 func TestSHA256(t *testing.T){
 	fmt.Println(SHA256("jason123"))
 	fmt.Println(SHA256("Sublime2"))
-	
+	fmt.Println("mlee123", SHA256("mlee123"))
 }
 
 //04eCB7UgahvXP_XZ-ZMdEw==
