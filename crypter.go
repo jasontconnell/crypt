@@ -10,7 +10,6 @@ import (
 	"io"
     "hash"
     "strings"
-    // "fmt"
 )
 
 func Encrypt(key string, text []byte) string {
