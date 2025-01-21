@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 )
 
@@ -32,7 +31,11 @@ func Encrypt(key string, text []byte) (string, error) {
 
 func Decrypt(key, b64 string) (string, error) {
 	bkey := evpBytesToKey(key, 32)
-	text := decodeBase64(b64)
+	text, err := decodeBase64(b64)
+	if err != nil {
+		return "", err
+	}
+
 	block, err := aes.NewCipher(bkey)
 	if err != nil {
 		return "", err
@@ -68,14 +71,26 @@ func CBCEncrypt(key string, text []byte) (string, error) {
 }
 
 func CBCDecrypt(key, b64 string) (string, error) {
-	b := decodeBase64(b64)
 	hashKey := evpBytesToKey(key, 32)
-	iv := b[:aes.BlockSize]
-	b = b[aes.BlockSize:]
 	block, err := aes.NewCipher(hashKey)
-
 	if err != nil {
 		return "", err
+	}
+
+	b, err := decodeBase64(b64)
+	if err != nil {
+		return "", err
+	}
+
+	if len(b) < block.BlockSize() {
+		return "", fmt.Errorf("cipher text too short %d", len(b))
+	}
+
+	iv := b[:aes.BlockSize]
+	b = b[aes.BlockSize:]
+
+	if len(b)%block.BlockSize() != 0 {
+		return "", fmt.Errorf("cipher text is not a multiple of block size %d %d", len(b), block.BlockSize())
 	}
 
 	cbc := cipher.NewCBCDecrypter(block, iv)
@@ -183,10 +198,7 @@ func encodeBase64(b []byte) string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
-func decodeBase64(s string) []byte {
+func decodeBase64(s string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		log.Println(err)
-	}
-	return data
+	return data, err
 }

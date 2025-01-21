@@ -4,6 +4,25 @@ import (
 	"testing"
 )
 
+func TestCBCDecryptInvalid(t *testing.T) {
+	key := "random array of characters"
+	enc, err := Encrypt(key, []byte("secret password of a random length"))
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
+
+	t.Log("got encrypted", enc)
+	invalid := enc[:len(enc)-1]
+	dec, err := CBCDecrypt(key, invalid)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Fail()
+	}
+	t.Log(dec)
+}
+
 func TestEncrypt(t *testing.T) {
 	key := "random array of characters"
 
