@@ -2,67 +2,96 @@ package crypt
 
 import (
 	"testing"
-
-	"fmt"
 )
 
-func TestEncrypt(t *testing.T){
+func TestEncrypt(t *testing.T) {
 	key := "random array of characters"
 
-	s := Encrypt(key, []byte("abopassword"))
+	s, err := Encrypt(key, []byte("abopassword"))
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
 
 	t.Log("Encrypted abopassword")
 	t.Log(s)
 }
 
-func TestCBCDecrypt(t *testing.T){
+func TestCBCDecrypt(t *testing.T) {
 	key := "random array of characters"
 	//s := Decrypt(key, "hg+TLS1yFfXaGaW3t7Cc0Q==")
 
-	t.Log("aFsycP-HU62YL8yLXRC5lw==", CBCDecrypt(key, "aFsycP+HU62YL8yLXRC5lw=="))
-	//t.Log("Lj9w6mPQNKEE5KSA9KeAXtRCA99WAGOkBRfm", Decrypt(key, "Lj9w6mPQNKEE5KSA9KeAXtRCA99WAGOkBRfm"))
-	t.Log("-qNuRpQKjGbGleL_8Efuhg==", CBCDecrypt(key, "+qNuRpQKjGbGleL/8Efuhg=="))
+	s, err := CBCDecrypt(key, "aFsycP+HU62YL8yLXRC5lw==")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	t.Log("aFsycP-HU62YL8yLXRC5lw==", s)
+
+	s2, err := CBCDecrypt(key, "+qNuRpQKjGbGleL/8Efuhg==")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	t.Log("-qNuRpQKjGbGleL_8Efuhg==", s2)
 }
 
-func TestCBCEncrypt(t *testing.T){
+func TestCBCEncrypt(t *testing.T) {
 	key := "random array of characters"
-	enc := CBCEncrypt(key, []byte("jason is awesome"))
-	dec := CBCDecrypt(key, enc)
+	enc, err := CBCEncrypt(key, []byte("jason is awesome"))
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	dec, err := CBCDecrypt(key, enc)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 
-	fmt.Println(enc)
-	fmt.Println(dec)
+	t.Log(enc)
+	t.Log(dec)
 
 }
 
-func TestCBCEncryptBase64Url(t *testing.T){
+func TestCBCEncryptBase64Url(t *testing.T) {
 	key := "random array of characters"
-	enc := CBCEncryptBase64Url(key, []byte("jason is awesome"))
-	dec := CBCDecryptBase64Url(key, enc)
+	enc, err := CBCEncryptBase64Url(key, []byte("jason is awesome"))
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 
-	fmt.Println(enc)
-	fmt.Println(dec)
+	dec, err := CBCDecryptBase64Url(key, enc)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 
+	t.Log(enc)
+	t.Log(dec)
 
-	fmt.Println("old one", CBCDecryptOldBase64Url(key, "-qNuRpQKjGbGleL_8Efuhg=="))
+	enc2, err := CBCEncryptBase64Url(key, []byte("jason connell rules"))
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 
-	enc2 := CBCEncryptBase64Url(key, []byte("jason connell rules"))
-	fmt.Println("jason connell rules", enc2)
+	t.Log("jason connell rules", enc2)
 
-	dec2 := CBCDecryptBase64Url(key, enc2)
-	fmt.Println(enc2, dec2)		
-	fmt.Println("old one with new decrypt", CBCDecryptBase64Url(key, "-qNuRpQKjGbGleL_8Efuhg=="))
+	dec2, err := CBCDecryptBase64Url(key, enc2)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+
+	t.Log(enc2, dec2)
 }
 
-func TestSHA256(t *testing.T){
-	fmt.Println(SHA256("jason123"))
-	fmt.Println(SHA256("Sublime2"))
-	fmt.Println("mlee123", SHA256("mlee123"))
+func TestSHA256(t *testing.T) {
+	t.Log(SHA256("jason123"))
+	t.Log(SHA256("Sublime2"))
+	t.Log("mlee123", SHA256("mlee123"))
 }
 
-//04eCB7UgahvXP_XZ-ZMdEw==
-func TestCBCDecryptOldBase64Url(t *testing.T){
-		key := "random array of characters"
-
-	fmt.Println("cbc decrypt old", CBCDecryptOldBase64Url(key, "JbQMc_vRDhKUbV3e0Jn01A=="))
-	fmt.Println("cbc decrypt new", CBCDecryptBase64Url(key, "JbQMc_vRDhKUbV3e0Jn01A=="))
-}
+// 04eCB7UgahvXP

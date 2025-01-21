@@ -7,38 +7,38 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"hash"
+	"fmt"
 	"io"
 	"log"
 	"strings"
 )
 
-func Encrypt(key string, text []byte) string {
+func Encrypt(key string, text []byte) (string, error) {
 	bkey := evpBytesToKey(key, 32)
 	block, err := aes.NewCipher(bkey)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	ciphertext := make([]byte, aes.BlockSize+len(text))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
+		return "", err
 	}
 	cfb := cipher.NewCFBEncrypter(block, iv)
 	cfb.XORKeyStream(ciphertext[aes.BlockSize:], text)
-	return encodeBase64(ciphertext)
+	return encodeBase64(ciphertext), nil
 
 }
 
-func Decrypt(key, b64 string) string {
+func Decrypt(key, b64 string) (string, error) {
 	bkey := evpBytesToKey(key, 32)
 	text := decodeBase64(b64)
 	block, err := aes.NewCipher(bkey)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	if len(text) < aes.BlockSize {
-		panic("ciphertext too short")
+		return "", fmt.Errorf("ciphertext too short")
 	}
 
 	iv := text[:aes.BlockSize]
@@ -46,28 +46,28 @@ func Decrypt(key, b64 string) string {
 
 	cfb := cipher.NewCFBDecrypter(block, iv)
 	cfb.XORKeyStream(text, text)
-	return string(text)
+	return string(text), nil
 }
 
-func CBCEncrypt(key string, text []byte) string {
+func CBCEncrypt(key string, text []byte) (string, error) {
 	bkey := evpBytesToKey(key, 32)
 	block, err := aes.NewCipher(bkey)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	addPadding(&text)
 	ciphertext := make([]byte, aes.BlockSize+len(text))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
+		return "", err
 	}
 	cbc := cipher.NewCBCEncrypter(block, iv)
 	cbc.CryptBlocks(ciphertext[aes.BlockSize:], text)
-	return encodeBase64(ciphertext)
+	return encodeBase64(ciphertext), nil
 }
 
-func CBCDecrypt(key, b64 string) string {
+func CBCDecrypt(key, b64 string) (string, error) {
 	b := decodeBase64(b64)
 	hashKey := evpBytesToKey(key, 32)
 	iv := b[:aes.BlockSize]
@@ -81,37 +81,20 @@ func CBCDecrypt(key, b64 string) string {
 	cbc := cipher.NewCBCDecrypter(block, iv)
 	cbc.CryptBlocks(b, b)
 	s := string(removePadding(b))
-	return s // now clear text
+	return s, nil // now clear text
 }
 
-func CBCDecryptOld(key, b64 string) string {
-	b := decodeBase64(b64)
-	hashKey, iv := genIvAndKey([]byte{}, []byte(key), md5.New(), 32, 1)
-	block, err := aes.NewCipher(hashKey)
-
-	if err != nil {
-		panic(err)
-	}
-
-	cbc := cipher.NewCBCDecrypter(block, iv)
-	cbc.CryptBlocks(b, b)
-	s := string(removePadding(b))
-	return s // now clear text
-}
-
-func CBCDecryptBase64Url(key, b64 string) string {
+func CBCDecryptBase64Url(key, b64 string) (string, error) {
 	t := base64urldecode(b64)
 	return CBCDecrypt(key, t)
 }
 
-func CBCDecryptOldBase64Url(key, b64 string) string {
-	t := base64urldecode(b64)
-	return CBCDecryptOld(key, t)
-}
-
-func CBCEncryptBase64Url(key string, text []byte) string {
-	t := CBCEncrypt(key, text)
-	return base64urlencode(t)
+func CBCEncryptBase64Url(key string, text []byte) (string, error) {
+	t, err := CBCEncrypt(key, text)
+	if err != nil {
+		return "", err
+	}
+	return base64urlencode(t), nil
 }
 
 func SHA256(s string) string {
@@ -136,7 +119,6 @@ func evpBytesToKey(password string, keyLen int) (key []byte) {
 
 	cnt := (keyLen-1)/md5Len + 1
 	m := make([]byte, cnt*md5Len)
-	key = make([]byte, keyLen)
 
 	copy(m, md5sum([]byte(password)))
 
@@ -183,21 +165,6 @@ func removePadding(b []byte) []byte {
 	}
 
 	return ret
-}
-
-func genIvAndKey(salt, keyData []byte, h hash.Hash, keyLen, blockLen int) (key []byte, iv []byte) {
-	res := make([]byte, 0, keyLen+blockLen)
-	p := append(keyData, salt...)
-	var d_last []byte
-
-	for ; len(res) < keyLen+blockLen; h.Reset() {
-		h.Write(append(d_last, p...))
-		resNew := h.Sum(res)
-		d_last = resNew[len(res):]
-		res = resNew
-	}
-
-	return res[:keyLen], res[keyLen:]
 }
 
 func base64urlencode(b64 string) string {
