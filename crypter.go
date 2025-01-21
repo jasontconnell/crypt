@@ -75,7 +75,7 @@ func CBCDecrypt(key, b64 string) (string, error) {
 	block, err := aes.NewCipher(hashKey)
 
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	cbc := cipher.NewCBCDecrypter(block, iv)
